@@ -4,7 +4,7 @@
 # 📗 Table of Contents
 
 - [📗 Table of Contents](#-table-of-contents)
-- [📖 \[decode-morse-code\] ](#-decode-morse-code-)
+- [📖 \[oop-school-library\] ](#-oop-school-library-)
   - [🛠 Built With ](#-built-with-)
     - [Tech Stack ](#tech-stack-)
     - [Key Features ](#key-features-)
