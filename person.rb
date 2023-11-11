@@ -3,7 +3,7 @@ require './rental'
 
 class Person < Nameable
   # getter
-  attr_reader :id, :rentals
+  attr_reader :id, :rentals, :parent_permission
 
   # getter cum setter
   attr_accessor :name, :age
