@@ -3,8 +3,7 @@ require './teacher'
 require './book'
 require './rental'
 require 'io/console'
-
-class App # rubocop:disable Metrics/ClassLength
+class App
   def initialize
     @books = []
     @persons = []
@@ -12,108 +11,49 @@ class App # rubocop:disable Metrics/ClassLength
   end
 
   def back_to_main_menu
-    print "\n\nPress any key to return to main menu...."
+    print "\n\nPress any key to return to the main menu...."
     $stdin.getch
   end
 
   def choice_bool(test = '', str = '', type = 'i')
-    print "\n", str, "\nPress any key to return to main menu ..."
-    if type == 'i'
-      test.include? $stdin.getch.to_i
-    else
-      test.include? $stdin.getch
-    end
+    print "\n#{str}\nPress any key to return to the main menu ..."
+    type == 'i' ? test.include?($stdin.getch.to_i) : test.include?($stdin.getch)
   end
 
-  def list_all_books
-    if @books.empty?
-      puts 'Book List is empty!'
+  def list_items(items, label, empty_msg)
+    if items.empty?
+      puts "#{label} is empty! #{empty_msg}"
     else
-      print "\n====== List of Books available =======\n\n"
-      @books.each { |book| puts "Title: '#{book.title}', Author: #{book.author}" }
+      print "\n====== List of #{label} =======\n\n"
+      items.each { |item| puts item }
     end
     back_to_main_menu
   end
 
-  def list_all_persons
-    if @persons.empty?
-      puts 'Person List is empty!'
+  def create_person(type)
+    name = name_title('name')
+    age = age_entry
+    if type == 1
+      permission = choice_bool(%w[Y y], 'Whether have parent permission [Y/N]: ', 's')
+      person = Student.new(age, name, parent_permission: permission)
     else
-      print "\n====== List of Books available =======\n\n"
-      @persons.each { |person| puts "[#{person.class}] Name: #{person.name}, ID: #{person.id}, Age: #{person.age}" }
+      specialization = name_title('specialization')
+      person = Teacher.new(age, specialization, name)
     end
-    back_to_main_menu
+    @persons << person
+    display_person_info(person)
   end
 
-  def person_type
-    opt = 0
-    mid_str = "\nEnter Your choice: "
-    loop do
-      system('clear')
-      print "\nCreate a Person\n"
-      print "\nEnter 1 to create Student\nEnter 2 to create Teacher", mid_str
-      break if (1..2).include?(opt = gets.chomp.to_i)
-
-      mid_str = "\n Invalid Type! Please Enter 1 or 2: "
-    end
-    opt
-  end
-
-  def name_title(str)
-    item_valid = false
-    msg = "\nPlease Enter #{str}:  "
-    until item_valid
-      print msg
-      item_valid = (name_str = gets.chomp).length.positive?
-      msg = "\nInvalid Input! #{str} cannot be empty\nPlease Enter Again: "
-    end
-    name_str
-  end
-
-  def age_entry
-    item_valid = false
-    until item_valid
-      print 'Enter Age: '
-      item_valid = (1..100).include?(age = gets.chomp.to_i)
-      print 'Enter a valid age between 1 to 100' unless item_valid
-    end
-    age
-  end
-
-  def create_student
-    name = name_title('name')
-    age = age_entry
-    item_valid = false
-    until item_valid
-      print 'Whether have parent permission [Y/N]: '
-      item_valid = %w[Y y N n].include?(permission = $stdin.getch)
-      puts
-    end
-    permission = permission.capitalize == 'Y'
-    stud = Student.new(age, name, parent_permission: permission)
-    @persons << stud
-    print "\n\nID: #{stud.id} Name: #{stud.name} Age: #{stud.age} Parent Permission: #{stud.parent_permission}"
-    print "\nNew Student is created successfully!\n"
-  end
-
-  def create_teacher
-    name = name_title('name')
-    age = age_entry
-    specialization = name_title('specialization')
-    teacher = Teacher.new(age, specialization, name)
-    @persons << teacher
-    print "\n\nID: #{teacher.id} Name: #{teacher.name} Age: #{teacher.age}"
-    print "\nNew Teacher is created successfully!\n"
+  def display_person_info(person)
+    print "\n\nID: #{person.id} Name: #{person.name} Age: #{person.age}"
+    print person.is_a?(Student) ? " Parent Permission: #{person.parent_permission}" : ''
+    print "\nNew #{person.class} is created successfully!\n"
   end
 
   def create_a_person
     add_item = true
     while add_item
-      if person_type == 1
-        create_student
-      else
-        create_teacher
-      end
+      create_person(person_type)
       add_item = choice_bool(%w[Y y], "Press [Y/y] to add another person\nOr", 's')
     end
   end
@@ -121,7 +61,6 @@ class App # rubocop:disable Metrics/ClassLength
   def create_a_book
     add_item = true
     while add_item
-      print "\nCreate a book\n"
       title = name_title('title')
       author = name_title('author')
       book = Book.new(title, author)
@@ -129,87 +68,64 @@ class App # rubocop:disable Metrics/ClassLength
       print "\n\nTitle: #{book.title} Author: #{book.author}"
       print "\nNew Book is created successfully!\n"
       add_item = choice_bool(%w[Y y], "Press [Y/y] to add another book\nOr", 's')
-      system('clear')
     end
-  end
-
-  def check_books_persons
-    if @books.empty? || @persons.empty?
-      puts 'Book list Or Person list is empty!'
-      puts 'Please try entering some'
-      false
-    else
-      true
-    end
-  end
-
-  def sel_book_by_no
-    sel_mode = false
-    until sel_mode
-      print "\nSelect a book from the following list by number\n"
-      @books.map.with_index do |book, index|
-        puts "No: #{index + 1}) Title: '#{book.title}', Author: #{book.author}"
-      end
-      print "\nEnter your choice: "
-      sel_mode = (1..@books.length).include?(opt = gets.chomp.to_i)
-    end
-    opt - 1
-  end
-
-  def sel_person_by_no
-    sel_mode = false
-    until sel_mode
-      print "\nSelect a person from the following list by number\n"
-      @persons.map.with_index do |person, index|
-        puts "No: #{index + 1}) Name: '#{person.name}', Age: #{person.age}"
-      end
-      print "\nEnter your choice: "
-      sel_mode = (1..@persons.length).include?(opt = gets.chomp.to_i)
-    end
-    opt - 1
   end
 
   def create_a_rental
     add_item = check_books_persons
     while add_item
-      sel_book = @books[sel_book_by_no]
-      sel_person = @persons[sel_person_by_no]
-      print "\nEnter a date [format yyyy/mm/dd]: "
-      date = gets.chomp
+      sel_book = @books[sel_item_by_no(@books, 'book')]
+      sel_person = @persons[sel_item_by_no(@persons, 'person')]
+      date = input_date
       @rentals << Rental.new(date, sel_person, sel_book)
-      print "\nDate: #{date} Book: #{sel_book.title} Name: #{sel_person.name}"
-      print "\nNew Rentals Added Successfully!\n"
+      display_rental_info(date, sel_book, sel_person)
       add_item = choice_bool(%w[Y y], "Press [Y/y] to add another rental\nOr", 's')
     end
   end
 
-  # rubocop:disable Metrics/MethodLength
-  # rubocop:disable Metrics/PerceivedComplexity
-  def list_all_rentals # rubocop:disable Metrics/CyclomaticComplexity
-    selper = false
+  def sel_item_by_no(items, label)
+    sel_mode = false
+    until sel_mode
+      print "\nSelect a #{label} from the following list by number\n"
+      items.each.with_index { |item, index| puts "No: #{index + 1}) #{item}" }
+      print "\nEnter your choice: "
+      sel_mode = (1..items.length).include?(opt = gets.chomp.to_i)
+    end
+    opt - 1
+  end
+
+  def display_rental_info(date, sel_book, sel_person)
+    print "\n\nDate: #{date} Book: #{sel_book.title} Name: #{sel_person.name}"
+    print "\nNew Rental Added Successfully!\n"
+  end
+
+  def list_all_rentals
     if @rentals.empty?
-      puts 'rentals List is empty!'
+      puts 'Rentals List is empty!'
     else
-      until selper
-        system('clear')
-        print "\n====== List of Persons On Rental List =======\n\n"
-        @rentals.each { |rental| puts "Name: #{rental.person.name}, ID: #{rental.person.id}" }
-        print 'Enter an ID from the list : '
-        id = gets.chomp.to_i
-        @rentals.each { |rental| selper = true if rental.person.id == id }
-      end
-      nam1 = @persons.find { |person| person.id == id }
-      puts "\nList of books rented to ID: #{id} Name: #{nam1.name}\n\n"
-      @rentals.each do |rental|
-        if rental.person.id == id
-          puts "Date: #{rental.date}. Book: '#{rental.book.title}' Author: #{rental.book.author}"
-        end
-      end
+      id = select_person_id
+      display_rentals_by_person_id(id)
     end
     back_to_main_menu
   end
-  # rubocop:enable Metrics/PerceivedComplexity
-  # rubocop:enable Metrics/MethodLength
+
+  def select_person_id
+    selper = false
+    until selper
+      list_items(@rentals.map { |rental| "#{rental.person.name}, ID: #{rental.person.id}" },
+                 'Persons On Rental List', 'Please try entering some rentals first.')
+      print 'Enter an ID from the list : '
+      id = gets.chomp.to_i
+      selper = @rentals.any? { |rental| rental.person.id == id }
+    end
+    id
+  end
+
+  def display_rentals_by_person_id(id)
+    person_name = @persons.find { |person| person.id == id }.name
+    puts "\nList of books rented to ID: #{id} Name: #{person_name}\n\n"
+    @rentals.each { |rental| display_rental_info(rental.date, rental.book, rental.person) if rental.person.id == id }
+  end
 
   def exit_app
     system('clear')
